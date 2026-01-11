@@ -28,7 +28,7 @@ const Login: React.FC<LoginProps> = ({ isDark }) => {
                         access_type: 'offline',
                         prompt: 'consent',
                     },
-                    redirectTo: window.location.origin + '/dashboard',
+                    redirectTo: window.location.origin, // Redirect to root, let App router handle dashboard
                 },
             });
 
