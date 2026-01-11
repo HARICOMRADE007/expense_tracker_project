@@ -222,6 +222,9 @@ const Dashboard = ({ session, isDark, toggleTheme }: DashboardProps) => {
                             </div>
                         </div>
                     </div>
+
+                    {/* Floating Advisor */}
+                    <FinancialAdvisor expenses={expenses} isDark={isDark} />
                 </div>
                 );
 };
