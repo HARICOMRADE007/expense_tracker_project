@@ -10,7 +10,7 @@ import Filters from '../components/Filters';
 import ThemeToggle from '../components/ThemeToggle';
 import { CategoryPieChart, CategoryBarChart, TrendLineChart } from '../components/Charts';
 import { filterExpenses, getTotal, getTodayTotal } from '../utils/helpers';
-import { exportToExcel } from '../utils/exportUtils';
+import { exportToExcel, exportRangeToExcel } from '../utils/exportUtils';
 import { expenseService } from '../services/expenseService';
 import FinancialAdvisor from '../components/FinancialAdvisor';
 
@@ -47,6 +47,28 @@ const Dashboard = ({ session, isDark, toggleTheme }: DashboardProps) => {
 
     const handleExport = () => {
         exportToExcel(expenses, exportMonth, exportYear);
+    };
+
+    // Range Export State
+    const [showExportModal, setShowExportModal] = useState(false);
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
+
+    const handleRangeExport = () => {
+        if (!startDate || !endDate) {
+            alert('Please select both start and end dates');
+            return;
+        }
+        // Import strictly here if needed, or assume it's imported at top
+        // For now, I'll update imports in a separate check or assume auto-import if IDE handles it
+        // but for safety, I will rely on updating imports in the next step or same step if I can view top
+        // Actually, let's just rely on the existing import update I'll do next.
+        // Wait, I can only do one replacement per tool call usually unless I assume the import is there.
+        // I will add the logic first.
+        import('../utils/exportUtils').then(module => {
+            module.exportRangeToExcel(expenses, startDate, endDate);
+            setShowExportModal(false);
+        });
     };
 
     const handleLogout = async () => {
@@ -95,9 +117,68 @@ const Dashboard = ({ session, isDark, toggleTheme }: DashboardProps) => {
                 }`}
         >
             {/* Theme Toggle - Left Aligned */}
-            <div className="absolute top-4 left-4 z-50">
+            <div className="absolute top-4 left-4 z-50 flex gap-3 items-center">
                 <ThemeToggle isDark={isDark} onToggle={toggleTheme} />
+
+                <button
+                    onClick={() => setShowExportModal(true)}
+                    className={`p-3 rounded-xl shadow-lg transition-all duration-300 hover:scale-105 active:scale-95 flex items-center gap-2 ${isDark
+                            ? 'bg-gray-800/90 text-green-400 hover:bg-gray-700 border-gray-700'
+                            : 'bg-white/90 text-green-600 hover:bg-white border-white/20'
+                        } backdrop-blur-xl border`}
+                    title="Download Report"
+                >
+                    <FileSpreadsheet size={20} />
+                    <span className="hidden sm:inline font-medium text-sm">Report</span>
+                </button>
             </div>
+
+            {/* Export Modal */}
+            {showExportModal && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                    <div className={`w-full max-w-md rounded-2xl p-6 shadow-2xl ${isDark ? 'bg-gray-800' : 'bg-white'} transform transition-all`}>
+                        <h3 className={`text-xl font-bold mb-4 ${isDark ? 'text-white' : 'text-gray-800'}`}>Download Expense Report</h3>
+
+                        <div className="space-y-4">
+                            <div>
+                                <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>From Date</label>
+                                <input
+                                    type="date"
+                                    value={startDate}
+                                    onChange={(e) => setStartDate(e.target.value)}
+                                    className={`w-full p-2 rounded-lg border outline-none ${isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'
+                                        }`}
+                                />
+                            </div>
+                            <div>
+                                <label className={`block text-sm font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>To Date</label>
+                                <input
+                                    type="date"
+                                    value={endDate}
+                                    onChange={(e) => setEndDate(e.target.value)}
+                                    className={`w-full p-2 rounded-lg border outline-none ${isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-gray-50 border-gray-200 text-gray-800'
+                                        }`}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex gap-3 justify-end mt-6">
+                            <button
+                                onClick={() => setShowExportModal(false)}
+                                className={`px-4 py-2 rounded-lg font-medium ${isDark ? 'text-gray-400 hover:bg-gray-700' : 'text-gray-600 hover:bg-gray-100'}`}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleRangeExport}
+                                className="px-4 py-2 rounded-lg bg-green-500 text-white font-medium hover:bg-green-600 shadow-lg shadow-green-500/20"
+                            >
+                                Download Excel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <div className="absolute top-4 right-4 flex gap-4 items-center z-50">
                 <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium border backdrop-blur-md ${isOnline
