@@ -59,7 +59,13 @@ const Dashboard = ({ session, isDark, toggleTheme }: DashboardProps) => {
                 }`}
         >
             <div className="absolute top-4 right-4 flex gap-4 items-center z-50">
-                {/* Online Status Indicator can go here later */}
+                <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium border backdrop-blur-md ${isOnline
+                    ? 'bg-green-500/10 text-green-500 border-green-500/20'
+                    : 'bg-red-500/10 text-red-500 border-red-500/20'
+                    }`}>
+                    <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
+                    <span className="hidden sm:inline">{isOnline ? 'System Online' : 'Offline Mode'}</span>
+                </div>
 
                 <ThemeToggle isDark={isDark} onToggle={toggleTheme} />
                 <button
