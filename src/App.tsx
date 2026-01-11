@@ -14,9 +14,9 @@ function App() {
   const [isDark, setIsDark] = useState(false);
 
   // Check for Env Vars immediately to trigger ErrorBoundary if missing
-  if (!import.meta.env.VITE_SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL.includes('placeholder')) {
-    throw new Error("Missing Supabase Variables on Vercel.\nPlease go to Vercel Settings -> Environment Variables and add them.");
-  }
+  // if (!import.meta.env.VITE_SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL.includes('placeholder')) {
+  //   throw new Error("Missing Supabase Variables on Vercel.\nPlease go to Vercel Settings -> Environment Variables and add them.");
+  // }
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -59,52 +59,81 @@ function App() {
     );
   }
 
+  // DEBUG: Remove this before production
+  const debugInfo = {
+    hasUrl: !!import.meta.env.VITE_SUPABASE_URL,
+    isPlaceholder: import.meta.env.VITE_SUPABASE_URL?.includes('placeholder'),
+    loading,
+    hasSession: !!session,
+    url: window.location.href
+  };
+
   return (
-    <HashRouter>
-      <Routes>
-        {/* Public Routes */}
-        <Route
-          path="/"
-          element={
-            !session ? (
-              <LandingPage isDark={isDark} />
-            ) : (
-              <Navigate to="/dashboard" replace />
-            )
-          }
-        />
+    <div style={{ position: 'relative' }}>
+      {/* Debug Overlay */}
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        zIndex: 9999,
+        background: 'rgba(0,0,0,0.8)',
+        color: 'lime',
+        padding: '10px',
+        fontSize: '12px',
+        pointerEvents: 'none',
+        maxWidth: '100%',
+        overflow: 'auto'
+      }}>
+        <p>DEBUG MODE</p>
+        <pre>{JSON.stringify(debugInfo, null, 2)}</pre>
+      </div>
 
-        <Route
-          path="/login"
-          element={
-            !session ? (
-              <Login isDark={isDark} />
-            ) : (
-              <Navigate to="/dashboard" replace />
-            )
-          }
-        />
+      <HashRouter>
+        <Routes>
+          {/* Public Routes */}
+          <Route
+            path="/"
+            element={
+              !session ? (
+                <LandingPage isDark={isDark} />
+              ) : (
+                <Navigate to="/dashboard" replace />
+              )
+            }
+          />
 
-        {/* Protected Routes */}
-        <Route
-          path="/dashboard"
-          element={
-            session ? (
-              <Dashboard
-                session={session}
-                isDark={isDark}
-                toggleTheme={toggleTheme}
-              />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        />
+          <Route
+            path="/login"
+            element={
+              !session ? (
+                <Login isDark={isDark} />
+              ) : (
+                <Navigate to="/dashboard" replace />
+              )
+            }
+          />
 
-        {/* Catch all */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </HashRouter>
+          {/* Protected Routes */}
+          <Route
+            path="/dashboard"
+            element={
+              session ? (
+                <Dashboard
+                  session={session}
+                  isDark={isDark}
+                  toggleTheme={toggleTheme}
+                />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          />
+
+          {/* Catch all */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </HashRouter>
+    </div>
   );
 }
 
