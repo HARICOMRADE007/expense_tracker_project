@@ -3,7 +3,6 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "homepage": "https://haricomrade007.github.io/expense_tracker_project",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
