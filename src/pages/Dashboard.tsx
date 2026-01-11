@@ -94,6 +94,11 @@ const Dashboard = ({ session, isDark, toggleTheme }: DashboardProps) => {
                 : 'bg-gradient-to-br from-blue-50 via-white to-green-50'
                 }`}
         >
+            {/* Theme Toggle - Left Aligned */}
+            <div className="absolute top-4 left-4 z-50">
+                <ThemeToggle isDark={isDark} onToggle={toggleTheme} />
+            </div>
+
             <div className="absolute top-4 right-4 flex gap-4 items-center z-50">
                 <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium border backdrop-blur-md ${isOnline
                     ? 'bg-green-500/10 text-green-500 border-green-500/20'
@@ -103,7 +108,6 @@ const Dashboard = ({ session, isDark, toggleTheme }: DashboardProps) => {
                     <span className="hidden sm:inline">{isOnline ? 'System Online' : 'Offline Mode'}</span>
                 </div>
 
-                <ThemeToggle isDark={isDark} onToggle={toggleTheme} />
                 <button
                     onClick={handleLogout}
                     className={`flex items-center gap-2 px-4 py-2 rounded-full backdrop-blur-md transition-all duration-300 ${isDark

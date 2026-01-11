@@ -57,7 +57,9 @@ const FinancialAdvisor = ({ expenses, isDark }: Props) => {
     };
 
     const handleSetup = () => {
-        localStorage.setItem('spendwise_api_key', apiKey);
+        const trimmedKey = apiKey.trim();
+        setApiKey(trimmedKey);
+        localStorage.setItem('spendwise_api_key', trimmedKey);
         setIsSetup(true);
         setShowSettings(false);
         if (!isSetup) addWelcomeMessage();
@@ -78,7 +80,7 @@ const FinancialAdvisor = ({ expenses, isDark }: Props) => {
         setLoading(true);
 
         try {
-            const responseText = await chatWithAdvisor(inputText, expenses, apiKey);
+            const responseText = await chatWithAdvisor(inputText, expenses, apiKey.trim());
 
             const aiMsg: Message = {
                 id: crypto.randomUUID(),
@@ -87,10 +89,11 @@ const FinancialAdvisor = ({ expenses, isDark }: Props) => {
                 timestamp: Date.now(),
             };
             setMessages(prev => [...prev, aiMsg]);
-        } catch (error) {
+        } catch (error: any) {
+            console.error(error);
             const errorMsg: Message = {
                 id: crypto.randomUUID(),
-                text: "I'm having trouble connecting right now. Please check your internet or API Key.",
+                text: `Connection Error: ${error.message || "Please check your internet or API Key."}`,
                 sender: 'ai',
                 timestamp: Date.now(),
             };
