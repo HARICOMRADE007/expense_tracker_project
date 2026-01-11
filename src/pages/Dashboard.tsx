@@ -49,7 +49,43 @@ const Dashboard = ({ session, isDark, toggleTheme }: DashboardProps) => {
         exportToExcel(expenses, exportMonth, exportYear);
     };
 
-    // ... loadExpenses, addExpense, deleteExpense ...
+    const handleLogout = async () => {
+        try {
+            await supabase.auth.signOut();
+        } catch (error) {
+            console.error('Error signing out:', error);
+        }
+    };
+
+    const loadExpenses = async () => {
+        try {
+            setLoading(true);
+            const data = await expenseService.getAll();
+            setExpenses(data);
+        } catch (error) {
+            console.error('Error loading expenses:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const addExpense = async (expense: any) => {
+        const newExpense = await expenseService.add(expense);
+        if (newExpense) {
+            setExpenses(prev => [newExpense, ...prev]);
+        }
+    };
+
+    const deleteExpense = async (id: string) => {
+        const success = await expenseService.delete(id);
+        if (success) {
+            setExpenses(prev => prev.filter(e => e.id !== id));
+        }
+    };
+
+    const filteredExpenses = filterExpenses(expenses, filters);
+    const totalExpenses = getTotal(filteredExpenses);
+    const todayExpenses = getTodayTotal(expenses);
 
     return (
         <div
