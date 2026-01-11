@@ -59,81 +59,52 @@ function App() {
     );
   }
 
-  // DEBUG: Remove this before production
-  const debugInfo = {
-    hasUrl: !!import.meta.env.VITE_SUPABASE_URL,
-    isPlaceholder: import.meta.env.VITE_SUPABASE_URL?.includes('placeholder'),
-    loading,
-    hasSession: !!session,
-    url: window.location.href
-  };
-
   return (
-    <div style={{ position: 'relative' }}>
-      {/* Debug Overlay */}
-      <div style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        zIndex: 9999,
-        background: 'rgba(0,0,0,0.8)',
-        color: 'lime',
-        padding: '10px',
-        fontSize: '12px',
-        pointerEvents: 'none',
-        maxWidth: '100%',
-        overflow: 'auto'
-      }}>
-        <p>DEBUG MODE</p>
-        <pre>{JSON.stringify(debugInfo, null, 2)}</pre>
-      </div>
+    <HashRouter>
+      <Routes>
+        {/* Public Routes */}
+        <Route
+          path="/"
+          element={
+            !session ? (
+              <LandingPage isDark={isDark} />
+            ) : (
+              <Navigate to="/dashboard" replace />
+            )
+          }
+        />
 
-      <HashRouter>
-        <Routes>
-          {/* Public Routes */}
-          <Route
-            path="/"
-            element={
-              !session ? (
-                <LandingPage isDark={isDark} />
-              ) : (
-                <Navigate to="/dashboard" replace />
-              )
-            }
-          />
+        <Route
+          path="/login"
+          element={
+            !session ? (
+              <Login isDark={isDark} />
+            ) : (
+              <Navigate to="/dashboard" replace />
+            )
+          }
+        />
 
-          <Route
-            path="/login"
-            element={
-              !session ? (
-                <Login isDark={isDark} />
-              ) : (
-                <Navigate to="/dashboard" replace />
-              )
-            }
-          />
+        {/* Protected Routes */}
+        <Route
+          path="/dashboard"
+          element={
+            session ? (
+              <Dashboard
+                session={session}
+                isDark={isDark}
+                toggleTheme={toggleTheme}
+              />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
 
-          {/* Protected Routes */}
-          <Route
-            path="/dashboard"
-            element={
-              session ? (
-                <Dashboard
-                  session={session}
-                  isDark={isDark}
-                  toggleTheme={toggleTheme}
-                />
-              ) : (
-                <Navigate to="/login" replace />
-              )
-            }
-          />
-
-          {/* Catch all */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </HashRouter>
-    </div>
+        {/* Catch all */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </HashRouter>
   );
 }
 
