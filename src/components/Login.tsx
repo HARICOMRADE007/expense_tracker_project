@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { LogIn } from 'lucide-react';
+import { LogIn, Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface LoginProps {
     isDark: boolean;
@@ -8,7 +9,12 @@ interface LoginProps {
 
 const Login: React.FC<LoginProps> = ({ isDark }) => {
     const [loading, setLoading] = useState(false);
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [isSignUp, setIsSignUp] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [message, setMessage] = useState<string | null>(null);
+    const navigate = useNavigate();
 
     const handleGoogleLogin = async () => {
         try {
@@ -32,24 +38,53 @@ const Login: React.FC<LoginProps> = ({ isDark }) => {
         }
     };
 
+    const handleEmailAuth = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+        setError(null);
+        setMessage(null);
+
+        try {
+            if (isSignUp) {
+                const { error } = await supabase.auth.signUp({
+                    email,
+                    password,
+                });
+                if (error) throw error;
+                setMessage('Check your email for the confirmation link!');
+            } else {
+                const { error } = await supabase.auth.signInWithPassword({
+                    email,
+                    password,
+                });
+                if (error) throw error;
+                // Navigation handles automatically by App.tsx session listener
+            }
+        } catch (error: any) {
+            setError(error.message || 'An authentication error occurred');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div className={`min-h-screen flex items-center justify-center p-4 transition-colors duration-300 ${isDark
-                ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900'
-                : 'bg-gradient-to-br from-blue-50 via-white to-green-50'
+            ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900'
+            : 'bg-gradient-to-br from-blue-50 via-white to-green-50'
             }`}>
             <div className={`w-full max-w-md p-8 rounded-3xl shadow-2xl backdrop-blur-xl border transition-all duration-300 ${isDark
-                    ? 'bg-gray-800/50 border-gray-700 text-white'
-                    : 'bg-white/70 border-white/20 text-gray-800'
+                ? 'bg-gray-800/50 border-gray-700 text-white'
+                : 'bg-white/70 border-white/20 text-gray-800'
                 }`}>
                 <div className="text-center mb-8">
                     <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-tr from-blue-500 to-green-500 mb-4 shadow-lg animate-pulse">
                         <LogIn className="w-8 h-8 text-white" />
                     </div>
                     <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-500 to-green-500 bg-clip-text text-transparent mb-2">
-                        Welcome Back
+                        SpendWise
                     </h1>
                     <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                        Sign in to manage your expenses
+                        {isSignUp ? 'Create your account' : 'Sign in to manage your expenses'}
                     </p>
                 </div>
 
@@ -59,16 +94,78 @@ const Login: React.FC<LoginProps> = ({ isDark }) => {
                     </div>
                 )}
 
+                {message && (
+                    <div className="mb-6 p-4 rounded-xl bg-green-500/10 border border-green-500/20 text-green-500 text-sm text-center">
+                        {message}
+                    </div>
+                )}
+
+                <form onSubmit={handleEmailAuth} className="space-y-4 mb-6">
+                    <div className="relative">
+                        <Mail className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
+                        <input
+                            type="email"
+                            placeholder="Email address"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            required
+                            className={`w-full pl-12 pr-4 py-3 rounded-xl border outline-none transition-all ${isDark
+                                ? 'bg-gray-900/50 border-gray-700 focus:border-blue-500 text-white placeholder-gray-500'
+                                : 'bg-white/50 border-gray-200 focus:border-blue-500 text-gray-900 placeholder-gray-400'
+                                }`}
+                        />
+                    </div>
+                    <div className="relative">
+                        <Lock className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
+                        <input
+                            type="password"
+                            placeholder="Password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                            minLength={6}
+                            className={`w-full pl-12 pr-4 py-3 rounded-xl border outline-none transition-all ${isDark
+                                ? 'bg-gray-900/50 border-gray-700 focus:border-blue-500 text-white placeholder-gray-500'
+                                : 'bg-white/50 border-gray-200 focus:border-blue-500 text-gray-900 placeholder-gray-400'
+                                }`}
+                        />
+                    </div>
+
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 text-white font-semibold shadow-lg hover:shadow-blue-500/25 transition-all hover:scale-[1.02] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                        {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
+                            <>
+                                {isSignUp ? 'Create Account' : 'Sign In'}
+                                <ArrowRight className="w-5 h-5" />
+                            </>
+                        )}
+                    </button>
+                </form>
+
+                <div className="relative mb-6">
+                    <div className="absolute inset-0 flex items-center">
+                        <div className={`w-full border-t ${isDark ? 'border-gray-700' : 'border-gray-200'}`}></div>
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                        <span className={`px-4 ${isDark ? 'bg-gray-800 text-gray-400' : 'bg-white/70 text-gray-500'}`}>
+                            Or continue with
+                        </span>
+                    </div>
+                </div>
+
                 <button
                     onClick={handleGoogleLogin}
                     disabled={loading}
-                    className={`group relative w-full flex items-center justify-center gap-3 px-6 py-4 rounded-xl font-semibold transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed shadow-lg hover:shadow-xl ${isDark
-                            ? 'bg-white text-gray-900 hover:bg-gray-100'
-                            : 'bg-gray-900 text-white hover:bg-gray-800'
+                    className={`w-full flex items-center justify-center gap-3 px-6 py-3 rounded-xl font-medium transition-all duration-300 transform hover:scale-[1.02] border ${isDark
+                        ? 'bg-white text-gray-900 hover:bg-gray-100 border-transparent'
+                        : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-200'
                         }`}
                 >
                     {loading ? (
-                        <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                        <Loader2 className="w-5 h-5 animate-spin text-gray-500" />
                     ) : (
                         <>
                             <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -89,13 +186,22 @@ const Login: React.FC<LoginProps> = ({ isDark }) => {
                                     fill="#EA4335"
                                 />
                             </svg>
-                            <span>Continue with Google</span>
+                            <span>Google</span>
                         </>
                     )}
                 </button>
 
-                <p className={`mt-8 text-center text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
-                    Protected by Supabase Authentication
+                <p className={`mt-8 text-center text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                    {isSignUp ? 'Already have an account?' : "Don't have an account?"}
+                    <button
+                        onClick={() => {
+                            setIsSignUp(!isSignUp);
+                            setError(null);
+                        }}
+                        className="ml-2 font-semibold text-blue-500 hover:text-blue-400 transition-colors"
+                    >
+                        {isSignUp ? 'Sign In' : 'Sign Up'}
+                    </button>
                 </p>
             </div>
         </div>
