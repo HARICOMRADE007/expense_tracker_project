@@ -13,6 +13,11 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [isDark, setIsDark] = useState(false);
 
+  // Check for Env Vars immediately to trigger ErrorBoundary if missing
+  if (!import.meta.env.VITE_SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL.includes('placeholder')) {
+    throw new Error("Missing Supabase Variables on Vercel.\nPlease go to Vercel Settings -> Environment Variables and add them.");
+  }
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
