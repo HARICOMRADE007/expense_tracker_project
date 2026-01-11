@@ -2,6 +2,15 @@ import { supabase } from '../lib/supabase';
 import { Expense } from '../types/expense';
 
 export const expenseService = {
+    async checkConnection() {
+        try {
+            const { data, error } = await supabase.from('expenses').select('count').limit(1).single();
+            return !error;
+        } catch {
+            return false;
+        }
+    },
+
     async getAll() {
         try {
             // Get current user

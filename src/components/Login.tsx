@@ -11,6 +11,7 @@ const Login: React.FC<LoginProps> = ({ isDark }) => {
     const [loading, setLoading] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [name, setName] = useState('');
     const [isSignUp, setIsSignUp] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [message, setMessage] = useState<string | null>(null);
@@ -49,6 +50,11 @@ const Login: React.FC<LoginProps> = ({ isDark }) => {
                 const { error } = await supabase.auth.signUp({
                     email,
                     password,
+                    options: {
+                        data: {
+                            full_name: name,
+                        },
+                    },
                 });
                 if (error) throw error;
                 setMessage('Check your email for the confirmation link!');
@@ -101,6 +107,24 @@ const Login: React.FC<LoginProps> = ({ isDark }) => {
                 )}
 
                 <form onSubmit={handleEmailAuth} className="space-y-4 mb-6">
+                    {isSignUp && (
+                        <div className="relative">
+                            <div className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                            </div>
+                            <input
+                                type="text"
+                                placeholder="Full Name"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                required={isSignUp}
+                                className={`w-full pl-12 pr-4 py-3 rounded-xl border outline-none transition-all ${isDark
+                                    ? 'bg-gray-900/50 border-gray-700 focus:border-blue-500 text-white placeholder-gray-500'
+                                    : 'bg-white/50 border-gray-200 focus:border-blue-500 text-gray-900 placeholder-gray-400'
+                                    }`}
+                            />
+                        </div>
+                    )}
                     <div className="relative">
                         <Mail className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 ${isDark ? 'text-gray-400' : 'text-gray-500'}`} />
                         <input
