@@ -25,31 +25,49 @@ export const chatWithAdvisor = async (message: string, expenses: Expense[], apiK
     5. If asked about "total" or specifics, calculate from the provided data.
   `;
 
-    try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                contents: [
-                    {
-                        role: 'user',
-                        parts: [{ text: systemPrompt + '\n\nUser Question: ' + message }]
-                    }
-                ]
-            })
-        });
+    const models = ['gemini-1.5-flash', 'gemini-pro', 'gemini-1.0-pro'];
+    let lastError: any;
 
-        if (!response.ok) {
-            const err = await response.json();
-            throw new Error(err.error?.message || 'Failed to fetch response');
+    for (const model of models) {
+        try {
+            console.log(`Attempting to connect with model: ${model}`);
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    contents: [
+                        {
+                            role: 'user',
+                            parts: [{ text: systemPrompt + '\n\nUser Question: ' + message }]
+                        }
+                    ]
+                })
+            });
+
+            if (!response.ok) {
+                const err = await response.json();
+                // If it's a 404 (Not Found) or 400 (Bad Request - often model related), continue to next model
+                if (response.status === 404 || response.status === 400) {
+                    console.warn(`Model ${model} failed, trying next...`, err);
+                    lastError = err;
+                    continue;
+                }
+                throw new Error(err.error?.message || 'Failed to fetch response');
+            }
+
+            const data = await response.json();
+            return data.candidates[0].content.parts[0].text;
+
+        } catch (error: any) {
+            console.error(`Error with model ${model}:`, error);
+            lastError = error;
+            // Only continue if it's a specific "not found" type error we want to retry
+            // For now, we try next model on any error to be safe, or we could filter
+            continue;
         }
-
-        const data = await response.json();
-        return data.candidates[0].content.parts[0].text;
-    } catch (error: any) {
-        console.error('AI Chat Error:', error);
-        throw new Error(error.message || 'Failed to communicate with Advisor');
     }
+
+    throw new Error(lastError?.error?.message || lastError?.message || 'All AI models failed. Please check your API Key permissions.');
 };

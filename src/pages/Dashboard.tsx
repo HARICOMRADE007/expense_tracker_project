@@ -123,8 +123,8 @@ const Dashboard = ({ session, isDark, toggleTheme }: DashboardProps) => {
                 <button
                     onClick={() => setShowExportModal(true)}
                     className={`p-3 rounded-xl shadow-lg transition-all duration-300 hover:scale-105 active:scale-95 flex items-center gap-2 ${isDark
-                            ? 'bg-gray-800/90 text-green-400 hover:bg-gray-700 border-gray-700'
-                            : 'bg-white/90 text-green-600 hover:bg-white border-white/20'
+                        ? 'bg-gray-800/90 text-green-400 hover:bg-gray-700 border-gray-700'
+                        : 'bg-white/90 text-green-600 hover:bg-white border-white/20'
                         } backdrop-blur-xl border`}
                     title="Download Report"
                 >
@@ -181,13 +181,25 @@ const Dashboard = ({ session, isDark, toggleTheme }: DashboardProps) => {
             )}
 
             <div className="absolute top-4 right-4 flex gap-4 items-center z-50">
-                <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium border backdrop-blur-md ${isOnline
-                    ? 'bg-green-500/10 text-green-500 border-green-500/20'
-                    : 'bg-red-500/10 text-red-500 border-red-500/20'
-                    }`}>
+                <button
+                    onClick={() => {
+                        setIsOnline(false); // Visually indicate checking
+                        // Add a small delay/loading state if desired, but checkConnection is async
+                        expenseService.checkConnection().then(online => {
+                            setIsOnline(online);
+                            if (online) alert("Reconnected successfully!");
+                            else alert("Still offline. Please check your internet.");
+                        });
+                    }}
+                    className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium border backdrop-blur-md transition-colors ${isOnline
+                        ? 'bg-green-500/10 text-green-500 border-green-500/20 cursor-default'
+                        : 'bg-red-500/10 text-red-500 border-red-500/20 cursor-pointer hover:bg-red-500/20'
+                        }`}
+                    title={isOnline ? "System Online" : "Click to Reconnect"}
+                >
                     <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
-                    <span className="hidden sm:inline">{isOnline ? 'System Online' : 'Offline Mode'}</span>
-                </div>
+                    <span className="hidden sm:inline">{isOnline ? 'System Online' : 'Offline - Click to Retry'}</span>
+                </button>
 
                 <button
                     onClick={handleLogout}
