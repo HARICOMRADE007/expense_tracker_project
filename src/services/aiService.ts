@@ -3,16 +3,30 @@ import { Expense } from '../types/expense';
 const fetchAvailableModels = async (apiKey: string): Promise<string> => {
     try {
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
-        if (!response.ok) return 'gemini-1.5-flash'; // Fallback if list fails
+        if (!response.ok) return 'gemini-1.5-flash';
 
         const data = await response.json();
-        // Find first model that supports generateContent
-        const validModel = data.models?.find((m: any) =>
+
+        // Filter for generation models
+        const validModels = data.models?.filter((m: any) =>
             m.supportedGenerationMethods?.includes('generateContent') &&
             (m.name.includes('gemini-1.5') || m.name.includes('gemini-pro') || m.name.includes('gemini-1.0'))
         );
 
-        return validModel ? validModel.name.replace('models/', '') : 'gemini-1.5-flash';
+        if (!validModels || validModels.length === 0) return 'gemini-1.5-flash';
+
+        // Sort: Prefer "flash" first, then "pro"
+        // This ensures High Speed & Low Cost models are picked over heavy quota models
+        validModels.sort((a: any, b: any) => {
+            const aName = a.name.toLowerCase();
+            const bName = b.name.toLowerCase();
+            if (aName.includes('flash') && !bName.includes('flash')) return -1;
+            if (!aName.includes('flash') && bName.includes('flash')) return 1;
+            return 0;
+        });
+
+        // Return the first one (highest priority)
+        return validModels[0].name.replace('models/', '');
     } catch (e) {
         console.warn('Failed to fetch models list, using default', e);
         return 'gemini-1.5-flash';
@@ -23,7 +37,7 @@ export const chatWithAdvisor = async (message: string, expenses: Expense[], apiK
     if (!apiKey) throw new Error('API Key is missing');
 
     const summary = expenses
-        .slice(0, 50)
+        .slice(0, 20) // Reduced from 50 to 20 to save tokens and avoid Rate Limits
         .map(e => `${e.date}: ${e.amount} (${e.category}) - ${e.note || ''}`)
         .join('\n');
 
@@ -43,7 +57,6 @@ export const chatWithAdvisor = async (message: string, expenses: Expense[], apiK
   `;
 
     try {
-        // Dynamically find a working model
         const modelName = await fetchAvailableModels(apiKey);
         console.log(`Using AI Model: ${modelName}`);
 
@@ -64,6 +77,12 @@ export const chatWithAdvisor = async (message: string, expenses: Expense[], apiK
 
         if (!response.ok) {
             const err = await response.json();
+
+            // Handle Rate Limits specially
+            if (response.status === 429) {
+                throw new Error('Usage limit exceeded. Please wait 1 minute before trying again.');
+            }
+
             throw new Error(err.error?.message || 'Failed to fetch response');
         }
 
